@@ -1,0 +1,176 @@
+The CLI has a hierarchical structure, different modes with different configuration levels
+	> 			User EXEC mode
+	#  			Privileged EXEC mode
+	(config)# 	Global Configuration mode
+
+Name
+	(config)# hostname <name>
+
+Password for privileged mode
+	(config)# enable password <password>
+
+Delete command, pefix it with no word
+	(config)# no <command>
+
+Configuration files
+	running-config : file stores the actual configuration of the router
+	startup-config : file stores the last configuration saved (that will be loaded on router re-start)
+	
+	To save the actual configuration (running) in the NVRAM (startup)
+		# copy running-config startup-config
+	
+	To reload the startup configuration file from NVRAM (discard runnig)
+		# copy startup-config running-config
+
+Serial interface configuration
+	(config)# interface serial <number>				// select interface
+	(config-if)# ip address <ip address> <netmask>	// set ip address
+	(config-if)# clock rate 56000					// set clock rate for sync
+	(config-if)# no shutdown							// power up the interface
+
+Ethernet interface configuration
+	(config)# interface ethernet <number>			// select interface
+	(config-if)# ip address <ip address> <netmask>	// set ip address
+	(config-if)# no shutdown							// power up the interface
+
+Static routing
+	(config)# ip route <destination_ip> <mask> <next_hop> // <next_hop> may be either an interface or an ip address
+
+	The default route is used when no match is found on the actual routing table.
+	In other words is used to forward packet for unknown nwtwork, like internet.
+	It can be configured statically
+		(config)# ip route 0.0.0.0 0.0.0.0 <next_hop>
+
+RIP Routing Information Protocol
+RIPv1
+	- Messages dosen't contains subnet mask, so it is used the default one on the basis of classful approach
+	- It can be used for subnetting iff (subnetting with fixed subnet length & subnetted network are contiguous)
+		(config)# router rip
+		(config-router)# network <network_address>		// define RIP inteface (and so network)
+		... other networks, if any ...
+		(config-router)# passive-interface <interface> 	// to avoid sending of RIP msg through interface
+	
+	- It is possible to configure the default router (router to access internet) only on the border router. To spread this info to other RIP routers. In other words router tells to other RIP router that it is the way for internet.
+		(config-router)# default-information originate
+
+	- It is also possible to distribute static routes (?)
+		(config-router)# redistribute static
+
+	- To verify RIP configuration
+		# show ip protocols
+
+RIPv2
+	- Messages contains subnet mask field, so it is defined as classless routing protocol. In case of variable or discontinuous subnetting it does not work
+		(config)# router rip
+		(config-router)# version 2
+		... define network(s) and passive interface(s), if any ...
+
+	- This protocol does network summarization (as default). In these cases it acts like v1. In case of variable or discontinuous subnetting, summarization must be disabled
+		(config-router)# no auto-summary
+
+OSPF Open Shortest Path First
+	- The command to start/access an OSPF process through its id is
+		(config)# router ospf <id> // 1 < id < 65535
+	
+	- When inside OSPF process, it is possible to define its parameter
+		(config-router)# network <address> <wildcard-mask> area <area-number> 	// define OSPF inteface (and so network)
+		... other networks, if any ...
+		(config-router)# passive-interface <interface> 							// to avoid sending of OSPF msg through interface
+
+	- OSPF link cost can be changed into the interface configuration section
+		(config)# interface <type> <number>
+		(config-if)# ip ospf cost <cost>
+
+	- To verify OSPF configuration
+			# show ip protocols
+			# show ip ospf neighbor
+
+
+DHCP Dynamic Host Configuration Protocol
+	- The DHCP protocol allows to dynamically configure hosts in a LAN. It takes care about ip address and subnet mask, the Default gateway and the DNS Server
+
+	- The command to start/access DHCP configuration through its pool name is
+		(config)# ip dhcp pool <pool>
+
+	- The next step is the definition of the address pool to be assigned dynamically
+		(config-dhcp)# network <address> <mask>
+
+	- To provide the Internet access, default router and DNS server must be configured
+		(config-dhcp)# default-router <address>
+		(config-dhcp)# dns-server <address>
+
+	- It is possible to exclude one or a range of ip address from the pool
+		Router(config)#ip dhcp excluded-address <address>
+		Router(config)#ip dhcp excluded-address <first_address> <last_address>
+
+
+
+NAT Network Address Translation
+	- The first step in NAT configuration is the setting of inside (local) and outside (global) interfaces. First access to interface configuration and then
+		(config-if)#ip nat inside
+		(config-if)#ip nat outside
+
+	- Static translation among a private and a public ip address (used for servers)
+		(config)# ip nat inside source static <private_address> <public_address>
+
+	- Dynamic translation requires a list of private address to translate
+		(config)# access-list <acl-number> permit <source_address> <wildcard>
+
+		- So there are two options. It is possible to define a pool of public ip addresses and then a translation rule
+			(config)# ip nat pool <pool_name> <start_ip> <end_ip> netmask <netmask>
+			(config)# ip nat inside source list <acl-number> pool <pool_name>
+
+		- It is also possible to use a single public ip address for all the LAN hosts: the public ip address of one interface of the router
+			(config)# ip nat inside source list <acl-number> interface <interface> overload
+
+
+NOTES
+
+Classful Network
+	Class				Start address	End address			Subnet mask 
+	Class A				0.0.0.0			127.255.255.255		255.0.0.0		/8
+	Class B				128.0.0.0		191.255.255.255		255.255.0.0		/16
+	Class C				192.0.0.0		223.255.255.255		255.255.255.0	/24
+	Class D (multicast)	224.0.0.0 		239.255.255.255		-
+	Class E (reserved)	240.0.0.0 		255.255.255.255		-
+
+Private addresses
+	Class				Start address		End address		Subnet mask 
+	Class A				10.0.0.0		10.255.255.255		255.0.0.0		/8
+	Class B				172.16.0.0		172.31.255.255		255.240.0.0		/12
+	Class C				192.168.0.0		192.168.255.255		255.255.0.0		/16
+
+Route Summarization
+	Route summarization is a method where we create one summary route that represent multiple networks/subnets. It’s also called route aggregation or supernetting.
+
+	Summarization has a number of advantages:
+		+ Saves memory: routing tables will be smaller which reduces memory requirements.
+		+ Saves bandwidth: there are less routes to advertise so we save some bandwidth.
+		+ Saves CPU cycles: less packets to process and smaller routing tables to work on.
+		+ Stability: Prevents routing table instability due to flapping networks.
+		
+	There are also some disadvantages to summarization:
+		- Forwarding traffic for unused networks: a router will drop traffic when it doesn’t have a matching destination in its routing table. When we use summarization, it’s possible that the summary route covers networks that are not in use. The router that has a summary route will forward them to the router that has advertised the summary route.
+		- Sub-optimal routing: routers prefer the path with the longest prefix match. When you use summaries, it’s possible that your router prefers another path where it has learned a more specific network from. The summary route also has a single metric.
+
+Discontiguous Network
+	A Discontiguous Network topology is where you have some network (perhaps network 172.16.0.0) that is divided in two parts (perhaps 172.16.0.0 through 172.16.100.0 and 172.16.101.0 through 172.16.200.0) and to go from one part to the other part you must go through some other different network (perhaps 192.168.1.0).
+	In the early days of IP routing and subnetting (particularly in terms of classful routing) a discontiguous network was a problem. In more modern network routing (particularly in terms of classless routing) a discontiguous network is not a problem.
+
+Nat Pool Example
+	The following example translates between inside hosts addressed from either the 192.168.1.0 or 192.168.2.0 network to the globally unique 10.69.233.208/28 network:
+
+	ip nat pool net-208 10.69.233.208 10.69.233.223 prefix-length 28 
+	ip nat inside source list 1 pool net-208
+	!
+	interface ethernet 0
+	ip address 10.69.232.182 255.255.255.240
+	ip nat outside
+	!
+	interface ethernet 1
+	ip address 192.168.1.94 255.255.255.0
+	ip nat inside
+	!
+	access-list 1 permit 192.168.1.0 0.0.0.255
+	access-list 1 permit 192.168.2.0 0.0.0.255
+	

@@ -1,0 +1,56 @@
+1) Configurare un'interfaccia:
+- (config)# interface Serial0/0
+- (config-if)# ip address <ip address> <netmask>
+- (config-if)# clock rate 64000
+- (config-if)# no shutdown
+
+2) Configurare Static routing:
+- (config)# ip route <dest-ip> <subnet-mask> [interface or next-hop ip address]
+
+3) Configurare RIPv1:
+- (config)# router rip
+- (config-router)# network <ip address> #(per tutte le reti)
+- (config-router)# passive-interface <interface>    #(solitamente per reti FastEthernet)
+
+4) Configurare RIPv2: (in caso di subnetting variabile o discontinuo)
+- (config)# router rip
+- (config-router)# version 2
+- (config-router)# network <ip address> (per tutte le reti)
+- (config-router)# no auto-summary
+- (config-router)# passive-interface <interface>   #(solitamente per reti FastEthernet)
+
+5) Configurare OSPF:
+- (config)# router ospf 1
+- (config-router)# network <net address> <wildcard mask> area <area-number>
+- (config-router)# passive-interface <interface>	#(solitamente per reti FastEthernet)
+- # show ip ospf neighbor
+- # show ip ospf database
+
+	-> Cambiare costo link ospf:
+		- (config)# interface FastEthernet0/0
+		- (config-if)# ip ospf cost <cost>
+
+6) Configurare default router:
+- (config)# ip route 0.0.0.0 0.0.0.0 <interface>
+- (config-router)# default-information originate 
+
+7) Configurare DHCP:
+-> SERVER DHCP:
+	- (config)# ip dhcp pool <pool-name>
+	- (config-dhcp)# network <net address> <netmask>
+	- (config)# ip dhcp excluded-address <ip addresses>
+	- (config-dhcp)# default-router <ip address>
+	- (config-dhcp)# dns-server <ip address>
+
+8) Configurare NAT:
+- [Interfaccia inside] (config-if)# ip nat inside
+- [Interfaccia outside] (config-if)# ip nat outside
+-> STATIC NAT:
+	- (config)# ip nat inside source static <private address> <public address>
+-> DYNAMIC NAT:
+	- (config)# access-list <acl-number> permit <source-address> <wildcard>
+	- (config)# ip nat pool <pool-name> <start-ip> <end-ip> netmask <netmask>
+	- (config)# ip nat inside source list <acl-number> pool <pool-name>
+-> DYNAMIC NAT (OVERLOAD):
+	- (config)# access-list <acl-number> permit <source-address> <wildcard>
+	- (config)# ip nat inside source list <acl-number> interface <interface> overload
