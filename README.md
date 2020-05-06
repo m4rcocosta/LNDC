@@ -1,5 +1,7 @@
+<a href="https://www.dis.uniroma1.it/"><img src="http://www.dis.uniroma1.it/sites/default/files/marchio%20logo%20eng%20jpg.jpg" width="1000"></a>
+
 # LNDC
-Laboratory of Network Design and Configuration
+[Laboratory of Network Design and Configuration](https://web.uniroma1.it/netlab/laboratory-network-design-and-configuration-ex-laboratorio-applicazioni-telematiche)
 
 
 ## Lectures
