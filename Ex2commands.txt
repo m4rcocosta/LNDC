@@ -1,0 +1,102 @@
+- Define VLANs:
+S(config)# vlan <vlan-number>
+
+- Configure switch interfaces:
+Access: (Toward hosts)
+	S(config)# interface <interface>
+	S(config-if)# switchport mode access
+	S(config-if)# switchport access vlan <vlan-number>
+Trunk: (Toward other switches)
+	S(config)# interface <interface>
+	S(config-if)# switchport mode trunk
+	
+- Change native vlan:
+	S(config-if)# switchport trunk native vlan <vlan-number>
+
+- Configure management VLAN:
+	S(config)# interface vlan <vlan-number>
+	S(config-if)# ip address <address> <mask> (address belonging to vlan block)
+	S(config-if)# no shutdown
+
+- Switch accessible:
+	S(config)# line vty 0 15  (line vty 0 4 for router)
+	S(config-line)# password <password> (ex: password netlab)
+	S(config-line)# login
+
+- Switch configurable:
+	S(config)# enable password <password> (ex: enable password netlab)
+	
+- Traditional inter-VLAN routing: (every vlan has a different link between switch and router)
+	R(config)# interface <interface>
+	R(config-if)# ip address <address> <mask>
+	R(config-if)# no shutdown
+	
+	S(config)# interface <interface>
+	S(config-ig)# switchport mode access
+	S(config-ig)# switchport access vlan <vlan-number>
+	
+	N.B. the address of router must belong to vlan block. vlan-number must be the same of the vlan block used.
+	
+- Router on a stick: (all vlans use the same link)
+	S(config)# interface <interface>
+	S(config-ig)# switchport mode trunk
+	N.B. Do not configure nothing there
+	
+	R(config)# interface <interface>.<vlan-number>      #
+	R(config-if)# encapsulation dot1Q <vlan-number>     # For each vlan
+	R(config-if)# ip address <address> <mask>           #
+	
+	R(config)# interface <interface>
+	R(config-if)# no shutdown
+	
+	N.B. the address of router must belong to vlan block. vlan-number must be the same of the vlan block used.
+
+- Port security:
+Sticky dynamic:
+	S(config)# interface <interface>
+	S(config-if)# switchport port-security
+	S(config-if)# switchport port-security maximum <number>
+	S(config-if)# switchport port-security mac-address sticky
+
+- Tunnel GRE:
+	R(config)# interface Tunnel <number> (ex: interface tunnel 0)
+	R(config-if)# ip address <address> <mask> (ex: ip address 192.168.100.1 255.255.255.252)
+	R(config-if)# tunnel source <interface> (ex: tunnel source Fa0/1)
+	R(config-if)# tunnel destination <address-other-side> (ex: tunnel destination 18.8.8.7)
+	R(config-if)# tunnel mode <mode> (ex: tunnel mode gre ip)
+	R(config)# ip route <address-to-reach> <mask> <next-hop(address used fot other side tunnel)> (ex: ip route 192.168.10.0 255.255.255.0 192.168.100.2)
+
+- DHCP snooping:
+	S(config)# ip dhcp snooping
+	S(config)# ip dhcp snooping vlan <number> (ex: ip dhcp snooping vlan 1)
+	S(config)# no ip dhcp snooping information option
+	S(config)# interface <interface(the one towards the router)> (ex: interface Fa0/1)
+	S(config)# ip dhcp snooping trust
+
+
+- ACL examples:
+1) The minimum number of ACLs so that only these traffic flows are blocked:
+	a) HTTP traffic from Internet to VLAN 10 hosts;
+	b) ICMP traffic from hosts of network 111.10.0.0/28 to PC0;
+	c) UDP traffic from PC5 to PC4.
+	
+	In order to use the minimum number of ACLs, let's create only one and put it on interface Fa0/0 outgoing of router 1
+	a)	R(config)# access-list 101 permit tcp 111.10.0.0 0.0.0.15 10.0.0.0 0.0.255.255 eq 80 (Permit http traffic from 111.10.0.0 net)
+		R(config)# access-list 101 permit tcp 30.0.0.0 0.0.63.15 10.0.0.0 0.0.255.255 eq 80 (Permit http traffic from vlan 30)
+		R(config)# access-list 101 deny tcp any 10.0.0.0 0.0.255.255 eq 80 (source: any in case of internet, destination: ip address of vlan 10)
+		
+		N.B.: Using only the last command all the http traffic will be blocked, instead we need to block only internet traffic
+		
+	b)	R(config)# access-list 101 deny icmp 111.10.0.0 0.0.0.15 host 10.0.0.2 (use host and it's ip when a particular host is needed)
+	
+	c) 	R(config)# access-list 101 deny udp host 30.0.0.3 host 10.0.0.3
+	
+		R(config)# access-list 101 permit ip any any (The rest of the traffic must be permitted)
+		R(config)# interface <interface>
+		R(config-if)# ip access-group 101 out
+		
+2) The following traffic flows must be blocked (minimizing routers processing):
+	a) UDP traffic from PC0 to PC5;
+	b) ICMP traffic from Internet to all VLANs;
+	c) http traffic from VLAN 10 to VLAN 80;
+	d) all bidirectional traffic among VLAN 99 and Internet.
