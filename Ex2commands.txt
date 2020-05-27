@@ -57,6 +57,13 @@ Sticky dynamic:
 	S(config-if)# switchport port-security
 	S(config-if)# switchport port-security maximum <number>
 	S(config-if)# switchport port-security mac-address sticky
+	
+- Router accessible only from a particular vlan
+	R(config)# access-list <acl-number> permit <vlan-address> <vlan-mask>
+	R(config)# line vty 0 4
+	R(config-line)# password <password>
+	R(config-line)# login
+	R(config-line)# access-class <acl-number> in
 
 - Tunnel GRE:
 	R(config)# interface Tunnel <number> (ex: interface tunnel 0)
@@ -100,3 +107,25 @@ Sticky dynamic:
 	b) ICMP traffic from Internet to all VLANs;
 	c) http traffic from VLAN 10 to VLAN 80;
 	d) all bidirectional traffic among VLAN 99 and Internet.
+	
+	a) 	R0(config)# access-list 101 deny udp host 11.0.10.2 host 11.0.20.3
+	c) 	R0(config)# access-list 101 deny tcp any 11.0.80.0 0.0.0.255 eq 80  (use any since the acl is inserted in the subinterface of vlan 10)
+		R0(config)# access-list 101 permit any any  (allow the other traffic)
+		R0(config)# interface Fa0/0.10
+		R0(config-subif)# ip access-group 101 in  
+	b)	R0(config)# access-list 102 deny icmp any any               (To be extremely precise, R0(config)# access-list 102 permit icmp any host <Se2/0-ip-address> before this command)
+		R0(config)# interface Se2/0
+		R0(config-if)# ip access-group 102 in
+		
+		R1(config)# access-list 101 deny icmp any any
+		
+	d)	R1(config)# access-list 101 deny ip any 11.0.99.0 0.0.0.255
+		R1(config)# access-list 101 permit ip any any  (allow the other traffic)
+		R1(config)# interface Se2/0
+		R1(config-if)# ip access-group 101 in
+		
+		R1(config)# access-list 101 permit ip any 11.0.80.0 0.0.0.255
+		R1(config)# access-list 101 deny ip any any
+		R1(config)# access-list 101 permit ip any any  (useless)
+		R1(config)# interface Fa1/0
+		R1(config-if)# ip access-group 102 in
