@@ -15,16 +15,16 @@ Trunk: (Toward other switches)
 
 - Configure management VLAN:
 	S(config)# interface vlan <vlan-number>
-	S(config-if)# ip address <address> <mask> (address belonging to vlan block)
+	S(config-if)# ip address <address> <mask> 					// address belonging to vlan block
 	S(config-if)# no shutdown
 
 - Switch accessible:
-	S(config)# line vty 0 15  (line vty 0 4 for router)
-	S(config-line)# password <password> (ex: password netlab)
+	S(config)# line vty 0 15  									// line vty 0 4 for router
+	S(config-line)# password <password> 						// ex: password netlab
 	S(config-line)# login
 
 - Switch configurable:
-	S(config)# enable password <password> (ex: enable password netlab)
+	S(config)# enable password <password> 						// ex: enable password netlab
 	
 - Traditional inter-VLAN routing: (every vlan has a different link between switch and router)
 	R(config)# interface <interface>
@@ -42,9 +42,9 @@ Trunk: (Toward other switches)
 	S(config-ig)# switchport mode trunk
 	N.B. Do not configure nothing there
 	
-	R(config)# interface <interface>.<vlan-number>      #
-	R(config-if)# encapsulation dot1Q <vlan-number>     # For each vlan
-	R(config-if)# ip address <address> <mask>           #
+	R(config)# interface <interface>.<vlan-number>      //
+	R(config-if)# encapsulation dot1Q <vlan-number>     // For each vlan
+	R(config-if)# ip address <address> <mask>           //
 	
 	R(config)# interface <interface>
 	R(config-if)# no shutdown
@@ -66,18 +66,20 @@ Sticky dynamic:
 	R(config-line)# access-class <acl-number> in
 
 - Tunnel GRE:
-	R(config)# interface Tunnel <number> (ex: interface tunnel 0)
-	R(config-if)# ip address <address> <mask> (ex: ip address 192.168.100.1 255.255.255.252)
-	R(config-if)# tunnel source <interface> (ex: tunnel source Fa0/1)
-	R(config-if)# tunnel destination <address-other-side> (ex: tunnel destination 18.8.8.7)
+	R(config)# interface Tunnel <number> 															// ex: interface tunnel 0
+	R(config-if)# ip address <address> <mask> 														// ex: ip address 192.168.100.1 255.255.255.252
+	R(config-if)# tunnel source <interface> 														// ex: tunnel source Fa0/1
+	R(config-if)# tunnel destination <address-other-side> 											// ex: tunnel destination 18.8.8.7
 	R(config-if)# tunnel mode <mode> (ex: tunnel mode gre ip)
-	R(config)# ip route <address-to-reach> <mask> <next-hop(address used fot other side tunnel)> (ex: ip route 192.168.10.0 255.255.255.0 192.168.100.2)
+	
+	Add static route for tunnel:
+	R(config)# ip route <address-to-reach> <mask> <next-hop(address used for other side tunnel)> 	// ex: ip route 192.168.10.0 255.255.255.0 192.168.100.2
 
 - DHCP snooping:
 	S(config)# ip dhcp snooping
-	S(config)# ip dhcp snooping vlan <number> (ex: ip dhcp snooping vlan 1)
+	S(config)# ip dhcp snooping vlan <number> 														// ex: ip dhcp snooping vlan 1
 	S(config)# no ip dhcp snooping information option
-	S(config)# interface <interface(the one towards the router)> (ex: interface Fa0/1)
+	S(config)# interface <interface(the one towards the router)> 									// ex: interface Fa0/1
 	S(config)# ip dhcp snooping trust
 
 
@@ -88,17 +90,17 @@ Sticky dynamic:
 	c) UDP traffic from PC5 to PC4.
 	
 	In order to use the minimum number of ACLs, let's create only one and put it on interface Fa0/0 outgoing of router 1
-	a)	R(config)# access-list 101 permit tcp 111.10.0.0 0.0.0.15 10.0.0.0 0.0.255.255 eq 80 (Permit http traffic from 111.10.0.0 net)
-		R(config)# access-list 101 permit tcp 30.0.0.0 0.0.63.15 10.0.0.0 0.0.255.255 eq 80 (Permit http traffic from vlan 30)
-		R(config)# access-list 101 deny tcp any 10.0.0.0 0.0.255.255 eq 80 (source: any in case of internet, destination: ip address of vlan 10)
+	a)	R(config)# access-list 101 permit tcp 111.10.0.0 0.0.0.15 10.0.0.0 0.0.255.255 eq 80 			// Permit http traffic from 111.10.0.0 net
+		R(config)# access-list 101 permit tcp 30.0.0.0 0.0.63.15 10.0.0.0 0.0.255.255 eq 80 			// Permit http traffic from vlan 30
+		R(config)# access-list 101 deny tcp any 10.0.0.0 0.0.255.255 eq 80 								// source: any in case of internet, destination: ip address of vlan 10
 		
 		N.B.: Using only the last command all the http traffic will be blocked, instead we need to block only internet traffic
 		
-	b)	R(config)# access-list 101 deny icmp 111.10.0.0 0.0.0.15 host 10.0.0.2 (use host and it's ip when a particular host is needed)
+	b)	R(config)# access-list 101 deny icmp 111.10.0.0 0.0.0.15 host 10.0.0.2 			// use host and it's ip when a particular host is needed
 	
 	c) 	R(config)# access-list 101 deny udp host 30.0.0.3 host 10.0.0.3
 	
-		R(config)# access-list 101 permit ip any any (The rest of the traffic must be permitted)
+		R(config)# access-list 101 permit ip any any 									// The rest of the traffic must be permitted
 		R(config)# interface <interface>
 		R(config-if)# ip access-group 101 out
 		
@@ -109,11 +111,11 @@ Sticky dynamic:
 	d) all bidirectional traffic among VLAN 99 and Internet.
 	
 	a) 	R0(config)# access-list 101 deny udp host 11.0.10.2 host 11.0.20.3
-	c) 	R0(config)# access-list 101 deny tcp any 11.0.80.0 0.0.0.255 eq 80  (use any since the acl is inserted in the subinterface of vlan 10)
-		R0(config)# access-list 101 permit any any  (allow the other traffic)
+	c) 	R0(config)# access-list 101 deny tcp any 11.0.80.0 0.0.0.255 eq 80  			// use any since the acl is inserted in the subinterface of vlan 10
+		R0(config)# access-list 101 permit any any  									// allow the other traffic
 		R0(config)# interface Fa0/0.10
 		R0(config-subif)# ip access-group 101 in  
-	b)	R0(config)# access-list 102 deny icmp any any               (To be extremely precise, R0(config)# access-list 102 permit icmp any host <Se2/0-ip-address> before this command)
+	b)	R0(config)# access-list 102 deny icmp any any               					// To be extremely precise, R0(config)# access-list 102 permit icmp any host <Se2/0-ip-address> before this command
 		R0(config)# interface Se2/0
 		R0(config-if)# ip access-group 102 in
 		
@@ -126,6 +128,16 @@ Sticky dynamic:
 		
 		R1(config)# access-list 101 permit ip any 11.0.80.0 0.0.0.255
 		R1(config)# access-list 101 deny ip any any
-		R1(config)# access-list 101 permit ip any any  (useless)
+		R1(config)# access-list 101 permit ip any any  									// useless
 		R1(config)# interface Fa1/0
 		R1(config-if)# ip access-group 102 in
+		
+3) The following traffic flows must be blocked (minimizing routers processing):
+	a) ICMP traffic from Internet to VLAN 20;
+	b) HTTP traffic from VLAN 1 to VLAN 20;
+	
+	a) 	It's not possible a communication between internet and VLAN 20, since there is no NAT
+	b) 	R(config)# access-list 101 deny tcp any 192.168.0.0 0.0.0.255 eq 80
+		R(config)# access-list 101 permit any any
+		R(config)# interface Fa0/1
+		R(config-if)# ip access-group 101 in
