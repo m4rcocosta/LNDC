@@ -32,8 +32,8 @@ Trunk: (Toward other switches)
 	R(config-if)# no shutdown
 	
 	S(config)# interface <interface>
-	S(config-ig)# switchport mode access
-	S(config-ig)# switchport access vlan <vlan-number>
+	S(config-if)# switchport mode access
+	S(config-if)# switchport access vlan <vlan-number>
 	
 	N.B. the address of router must belong to vlan block. vlan-number must be the same of the vlan block used.
 	
@@ -80,7 +80,7 @@ Sticky dynamic:
 	S(config)# ip dhcp snooping vlan <number> 														// ex: ip dhcp snooping vlan 1
 	S(config)# no ip dhcp snooping information option
 	S(config)# interface <interface(the one towards the router)> 									// ex: interface Fa0/1
-	S(config)# ip dhcp snooping trust
+	S(config-if)# ip dhcp snooping trust
 
 
 - ACL examples:
