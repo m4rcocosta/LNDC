@@ -1,5 +1,5 @@
 - Define VLANs:
-S(config)# vlan <vlan-number>
+	S(config)# vlan <vlan-number>
 
 - Configure switch interfaces:
 Access: (Toward hosts)
@@ -80,7 +80,7 @@ Sticky dynamic:
 	S(config)# ip dhcp snooping vlan <number> 														// ex: ip dhcp snooping vlan 1
 	S(config)# no ip dhcp snooping information option
 	S(config)# interface <interface(the one towards the router)> 									// ex: interface Fa0/1
-	S(config)# ip dhcp snooping trust
+	S(config-if)# ip dhcp snooping trust
 
 
 - ACL examples:
@@ -138,6 +138,6 @@ Sticky dynamic:
 	
 	a) 	It's not possible a communication between internet and VLAN 20, since there is no NAT
 	b) 	R(config)# access-list 101 deny tcp any 192.168.0.0 0.0.0.255 eq 80
-		R(config)# access-list 101 permit any any
+		R(config)# access-list 101 permit ip any any
 		R(config)# interface Fa0/1
 		R(config-if)# ip access-group 101 in
